@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Brush Tile - Saildrone</title>
+<style>
+  html,body { margin:0; padding:0; }
+  .tile {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }
+  .tile img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .overlay {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    background: rgba(0,0,0,0.5);
+    color: white; text-transform: uppercase; letter-spacing: .08em;
+    font-weight: 600; font-size: clamp(14px, 3.2vw, 24px);
+    opacity: 0; pointer-events: none; transition: opacity 120ms ease;
+    user-select: none;
+  }
+  .overlay.show { opacity: 1; }
+  .label { padding: 0 16px; text-align: center; }
+  @media (hover:hover) and (pointer:fine) {
+    .tile:hover .overlay { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+  <a id="link" class="tile" href="https://bpinfield52.wixsite.com/my-site-1/copy-of-home">
+    <img src="https://static.wixstatic.com/media/6fc784_e952b901541240f199b9320ef7792f1f~mv2.jpg" alt="Saildrone" />
+    <div id="ov" class="overlay"><div class="label">Saildrone</div></div>
+  </a>
+
+<script>
+  (function () {
+    const tile = document.querySelector('.tile');
+    const overlay = document.getElementById('ov');
+    const link = document.getElementById('link');
+
+    const FLASH_MS = 140;
+    const BRUSH_HIDE_MS = 260;
+    const MOVE_THRESHOLD = 8;
+
+    let startY = 0, startX = 0, moved = false, touching = false, brushTimer = null;
+
+    function showOverlay() { overlay.classList.add('show'); }
+    function hideOverlay() { overlay.classList.remove('show'); }
+    function flashOverlay(ms = FLASH_MS) {
+      showOverlay();
+      setTimeout(hideOverlay, ms);
+    }
+
+    tile.addEventListener('click', function () {
+      flashOverlay();
+    }, { passive: true });
+
+    tile.addEventListener('touchstart', function (e) {
+      touching = true; moved = false;
+      const t = e.changedTouches[0];
+      startY = t.clientY; startX = t.clientX;
+      if (brushTimer) { clearTimeout(brushTimer); brushTimer = null; }
+    }, { passive: true });
+
+    tile.addEventListener('touchmove', function (e) {
+      if (!touching) return;
+      const t = e.changedTouches[0];
+      const dy = Math.abs(t.clientY - startY);
+      const dx = Math.abs(t.clientX - startX);
+      if (dy > MOVE_THRESHOLD || dx > MOVE_THRESHOLD) {
+        moved = true;
+        showOverlay();
+        if (brushTimer) clearTimeout(brushTimer);
+        brushTimer = setTimeout(() => { hideOverlay(); }, BRUSH_HIDE_MS);
+      }
+    }, { passive: true });
+
+    tile.addEventListener('touchend', function (e) {
+      touching = false;
+      if (moved) {
+        return;
+      }
+      e.preventDefault();
+      flashOverlay();
+      setTimeout(() => { window.location.href = link.href; }, FLASH_MS);
+    }, { passive: false });
+  })();
+</script>
+</body>
+</html>
